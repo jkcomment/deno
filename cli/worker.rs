@@ -51,11 +51,11 @@ impl WorkerHandle {
     sender.try_send(buf).map_err(ErrBox::from)
   }
 
-  // TODO: should use `try_lock` and return error if
-  // more than one listener tries to get event
-  pub async fn get_event(&self) -> Option<WorkerEvent> {
-    let mut receiver = self.receiver.lock().await;
-    receiver.next().await
+  /// Get the event with lock.
+  /// Return error if more than one listener tries to get event
+  pub async fn get_event(&self) -> Result<Option<WorkerEvent>, ErrBox> {
+    let mut receiver = self.receiver.try_lock()?;
+    Ok(receiver.next().await)
   }
 }
 
@@ -228,7 +228,7 @@ impl DerefMut for Worker {
 ///
 /// It provides ops available in the `Deno` namespace.
 ///
-/// All WebWorkers created during program execution are decendants of
+/// All WebWorkers created during program execution are descendants of
 /// this worker.
 pub struct MainWorker(Worker);
 
